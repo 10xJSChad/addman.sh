@@ -19,6 +19,12 @@ then
 fi
 
 
+if [ ! -d "$addons_path" ]
+then
+    mkdir "$addons_path"
+fi
+
+
 update_addons() {
     for addon in "$addons_path/"*
     do
