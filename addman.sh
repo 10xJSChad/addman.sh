@@ -8,6 +8,11 @@ addons_path="$addman_path/addons"
 config_path="$addman_path/config.sh"
 get_zip_url_py="$addman_path/utils/get-zip-url.py"
 
+color_red='\033[0;31m'
+color_green='\033[0;32m'
+color_yellow='\033[0;33m'
+color_reset='\033[0m'
+
 # source config
 . "$config_path"
 
@@ -54,16 +59,26 @@ download_addons() {
 
             if [ "$installed" == "$latest" ]
             then
-                echo "$addon_name is up to date."
+                echo -e "${color_green}$addon_name is up to date.${color_reset}"
                 continue
             fi
         fi
 
+        echo -e "${color_yellow}$addon_name is not up to date${color_reset}".
+
         echo "Downloading $addon_name..."
         echo "$latest" > "$addon/installed"
-        wget -q -O "$addon/addon.zip" "$latest"
+        wget -q -O "$addon/addon.zip" "$latest" &&
         unzip -q -o "$addon/addon.zip" -d "$wow_addons_path" &&
-        rm "$addon/addon.zip"
+        echo -e "${color_green}Successfully installed $addon_name${color_reset}"
+
+        if [ -f "$addon/addon.zip" ]
+        then
+            rm "$addon/addon.zip"
+        else
+            echo -e "${color_red}$addon_name may have failed, manual intervention is required.${color_reset}"
+        fi
+
     done
 }
 
