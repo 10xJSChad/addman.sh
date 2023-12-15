@@ -38,7 +38,7 @@ def get_latest(addon_name):
         print("NULL")
         return
     
-    zip_url = f"https://mediafilez.forgecdn.net/files/{highest[:4]}/{highest[4:]}/{zip_name}"
+    zip_url = f"https://mediafilez.forgecdn.net/files/{highest[:4]}/{highest[4:].lstrip('0')}/{zip_name}"
     print(zip_url)
 
 
