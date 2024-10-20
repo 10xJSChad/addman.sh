@@ -13,6 +13,8 @@ color_green='\033[0;32m'
 color_yellow='\033[0;33m'
 color_reset='\033[0m'
 
+batch_size=10
+
 # source config
 . "$config_path"
 
@@ -30,13 +32,31 @@ then
 fi
 
 
+if [ "$1" ]
+then
+    if ! [[ $1 =~ ^[0-9]+$ ]]
+    then
+        echo "invalid batch size"
+        exit 1
+    fi
+
+    batch_size="$1"
+fi
+
+
 update_addons() {
+    i=0
+
     for addon in "$addons_path/"*
     do
         addon_name=$(basename "$addon")
         echo "Checking $addon_name..."
         python3 "$get_zip_url_py" "$addon_name" > "$addons_path/$addon_name/latest" &
+
+        (( ++i % batch_size == 0 )) && wait
     done
+
+    wait
 }
 
 
