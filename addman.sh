@@ -32,16 +32,11 @@ then
 fi
 
 
-if [ "$1" ]
-then
-    if ! [[ $1 =~ ^[0-9]+$ ]]
-    then
-        echo "invalid batch size"
-        exit 1
-    fi
-
-    batch_size="$1"
-fi
+update_single_addon() {
+    addon_name="$1"
+    echo "Checking $addon_name..."
+    python3 "$get_zip_url_py" "$addon_name" > "$addons_path/$addon_name/latest" &
+}
 
 
 update_addons() {
@@ -50,9 +45,7 @@ update_addons() {
     for addon in "$addons_path/"*
     do
         addon_name=$(basename "$addon")
-        echo "Checking $addon_name..."
-        python3 "$get_zip_url_py" "$addon_name" > "$addons_path/$addon_name/latest" &
-
+        update_single_addon "$addon_name"
         (( ++i % batch_size == 0 )) && wait
     done
 
@@ -60,47 +53,90 @@ update_addons() {
 }
 
 
+download_single_addon() {
+    addon="$1"
+    addon_name=$(basename "$addon")
+
+    while [ "$latest" == "" ]
+    do
+        sleep 0.1
+        latest=$(cat "$addon/latest")
+    done
+
+    if [ -f "$addon/installed"  ]
+    then
+        installed=$(cat "$addon/installed")
+        latest=$(cat "$addon/latest")
+
+        if [ "$installed" == "$latest" ]
+        then
+            echo -e "${color_green}$addon_name is up to date.${color_reset}"
+            return
+        fi
+    fi
+
+    echo -e "${color_yellow}$addon_name is not up to date${color_reset}".
+
+    echo "Downloading $addon_name..."
+    echo "$latest" > "$addon/installed"
+    wget -q -O "$addon/addon.zip" "$latest" &&
+    unzip -q -o "$addon/addon.zip" -d "$wow_addons_path" &&
+    echo -e "${color_green}Successfully installed $addon_name${color_reset}"
+
+    if [ -f "$addon/addon.zip" ]
+    then
+        rm "$addon/addon.zip"
+    else
+        echo -e "${color_red}$addon_name may have failed, manual intervention is required.${color_reset}"
+    fi   
+}
+
+
 download_addons() {
     for addon in "$addons_path/"*
     do
-        addon_name=$(basename "$addon")
-        latest=$(cat "$addon/latest")
+        download_single_addon "$addon"
+    done
+}
 
-        while [ "$latest" == "" ]
-        do
-            sleep 0.1
-            latest=$(cat "$addon/latest")
-        done
 
-        if [ -f "$addon/installed"  ]
+if [ "$1" ]
+then
+    if [ "$1" = "install" ] || [ "$1" = "remove" ]
+    then
+        if ! [ "$2" ]
         then
-            installed=$(cat "$addon/installed")
-            latest=$(cat "$addon/latest")
+            echo "no addon name provided"
+            exit 1
+        fi
 
-            if [ "$installed" == "$latest" ]
+        if [ "$1" = "install" ]
+        then
+            mkdir "$addons_path/$2"
+            update_single_addon "$2"
+            download_single_addon "$2"
+        fi
+
+        if [ "$1" = "remove" ]
+        then
+            if [ -d "$addons_path/$2" ]
             then
-                echo -e "${color_green}$addon_name is up to date.${color_reset}"
-                continue
+                rm -rf "${addons_path:?}/$2"
             fi
         fi
 
-        echo -e "${color_yellow}$addon_name is not up to date${color_reset}".
+        exit 0
+    fi
 
-        echo "Downloading $addon_name..."
-        echo "$latest" > "$addon/installed"
-        wget -q -O "$addon/addon.zip" "$latest" &&
-        unzip -q -o "$addon/addon.zip" -d "$wow_addons_path" &&
-        echo -e "${color_green}Successfully installed $addon_name${color_reset}"
+    # check if is number
+    if ! [[ $1 =~ ^[0-9]+$ ]]
+    then
+        echo "invalid batch size"
+        exit 1
+    fi
 
-        if [ -f "$addon/addon.zip" ]
-        then
-            rm "$addon/addon.zip"
-        else
-            echo -e "${color_red}$addon_name may have failed, manual intervention is required.${color_reset}"
-        fi
-
-    done
-}
+    batch_size="$1"
+fi
 
 
 update_addons
