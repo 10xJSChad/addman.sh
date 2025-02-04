@@ -128,6 +128,17 @@ then
         exit 0
     fi
 
+    if [ "$1" = "list" ]
+    then
+        for addon in "$addons_path/"*
+        do
+            addon_name=$(basename "$addon")
+            echo "$addon_name"
+        done
+
+        exit 0
+    fi
+
     # check if is number
     if ! [[ $1 =~ ^[0-9]+$ ]]
     then
