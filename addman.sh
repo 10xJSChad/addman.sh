@@ -59,14 +59,17 @@ download_single_addon() {
 
     while [ "$latest" == "" ]
     do
-        sleep 0.1
-        latest=$(cat "$addon/latest")
+        if [ -f "$addons_path/$addon/latest" ]
+        then
+            sleep 0.1
+            latest=$(cat "$addons_path/$addon/latest")
+        fi
     done
 
     if [ -f "$addon/installed"  ]
     then
-        installed=$(cat "$addon/installed")
-        latest=$(cat "$addon/latest")
+        installed=$(cat "$addons_path/$addon/installed")
+        latest=$(cat "$addons_path/$addon/latest")
 
         if [ "$installed" == "$latest" ]
         then
@@ -78,14 +81,14 @@ download_single_addon() {
     echo -e "${color_yellow}$addon_name is not up to date${color_reset}".
 
     echo "Downloading $addon_name..."
-    echo "$latest" > "$addon/installed"
-    wget -q -O "$addon/addon.zip" "$latest" &&
-    unzip -q -o "$addon/addon.zip" -d "$wow_addons_path" &&
+    echo "$latest" > "$addons_path/$addon/installed"
+    wget -q -O "$addons_path/$addon/addon.zip" "$latest" &&
+    unzip -q -o "$addons_path/$addon/addon.zip" -d "$wow_addons_path" &&
     echo -e "${color_green}Successfully installed $addon_name${color_reset}"
 
-    if [ -f "$addon/addon.zip" ]
+    if [ -f "$addons_path/$addon/addon.zip" ]
     then
-        rm "$addon/addon.zip"
+        rm "$addons_path/$addon/addon.zip"
     else
         echo -e "${color_red}$addon_name may have failed, manual intervention is required.${color_reset}"
     fi   
