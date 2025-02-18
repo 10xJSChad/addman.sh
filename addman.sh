@@ -55,42 +55,42 @@ update_addons() {
 
 download_single_addon() {
     addon="$1"
-    addon_name=$(basename "$addon")
 
     while [ "$latest" == "" ]
     do
         if [ -f "$addons_path/$addon/latest" ]
         then
-            sleep 0.1
             latest=$(cat "$addons_path/$addon/latest")
         fi
+        
+        sleep 0.1
     done
 
-    if [ -f "$addon/installed"  ]
+    if [ -f "$addons_path/$addon/installed"  ]
     then
         installed=$(cat "$addons_path/$addon/installed")
         latest=$(cat "$addons_path/$addon/latest")
 
         if [ "$installed" == "$latest" ]
         then
-            echo -e "${color_green}$addon_name is up to date.${color_reset}"
+            echo -e "${color_green}$addon is up to date.${color_reset}"
             return
         fi
     fi
 
-    echo -e "${color_yellow}$addon_name is not up to date${color_reset}".
+    echo -e "${color_yellow}$addon is not up to date${color_reset}".
 
-    echo "Downloading $addon_name..."
+    echo "Downloading $addon..."
     echo "$latest" > "$addons_path/$addon/installed"
     wget -q -O "$addons_path/$addon/addon.zip" "$latest" &&
     unzip -q -o "$addons_path/$addon/addon.zip" -d "$wow_addons_path" &&
-    echo -e "${color_green}Successfully installed $addon_name${color_reset}"
+    echo -e "${color_green}Successfully installed $addon${color_reset}"
 
     if [ -f "$addons_path/$addon/addon.zip" ]
     then
         rm "$addons_path/$addon/addon.zip"
     else
-        echo -e "${color_red}$addon_name may have failed, manual intervention is required.${color_reset}"
+        echo -e "${color_red}$addon may have failed, manual intervention is required.${color_reset}"
     fi   
 }
 
@@ -98,7 +98,8 @@ download_single_addon() {
 download_addons() {
     for addon in "$addons_path/"*
     do
-        download_single_addon "$addon"
+        addon_name=$(basename "$addon")
+        download_single_addon "$addon_name"
     done
 }
 
@@ -115,8 +116,9 @@ then
 
         if [ "$1" = "install" ]
         then
-            mkdir "$addons_path/$2"
+            # mkdir "$addons_path/$2"
             update_single_addon "$2"
+            wait
             download_single_addon "$2"
         fi
 
