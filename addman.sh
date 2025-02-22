@@ -116,7 +116,7 @@ then
 
         if [ "$1" = "install" ]
         then
-            # mkdir "$addons_path/$2"
+            mkdir "$addons_path/$2"
             update_single_addon "$2"
             wait
             download_single_addon "$2"
